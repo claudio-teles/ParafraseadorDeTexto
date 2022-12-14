@@ -169,7 +169,7 @@ public class ParafraseadorGUI {
 							palavras.set(indiceDaPalavraPraSerSubstituida, palavraSorteada);
 							palavras.stream().forEach(item -> novoTexto += item+" ");
 							
-							textAreaDireita.setText(novoTexto);
+							textAreaDireita.setText(novoTexto); 
 							
 							sinonimos.clear();
 						});
