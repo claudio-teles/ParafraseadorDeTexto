@@ -6,13 +6,12 @@ import java.util.stream.Stream;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
-import manipulacao.documento.ManipulacaoDocumento;
 import util.UtilitarioGeral;
 
 public class ManipulacaoDOM {
 	
 	private StringBuilder queryGoogle = new StringBuilder("https://www.google.com.br/search?q=");
-	private StringBuilder contexto = new StringBuilder();
+	private StringBuilder contextoHTML = new StringBuilder();
 	
 	private Document documento;
 	private Document paginaDePesquisaDoGoogle;
@@ -21,12 +20,12 @@ public class ManipulacaoDOM {
 		super();
 	}
 
-	public StringBuilder getContexto() {
-		return contexto;
+	public StringBuilder getContextoHTML() {
+		return contextoHTML;
 	}
 
-	public void setContexto(StringBuilder contexto) {
-		this.contexto = contexto;
+	public void setContextoHTML(StringBuilder contextoHTML) {
+		this.contextoHTML = contextoHTML;
 	}
 
 	public Document getDocumento() {
@@ -97,35 +96,26 @@ public class ManipulacaoDOM {
 //		}
 	}
 	
-	public String lerDocWordOnline(ManipulacaoDocumento doc, String linkOriginal) throws IOException {
-		String conteudo = null;
-		String linkFinal = new UtilitarioGeral().obterLinkRedecionamentoUrl(linkOriginal);
-		if (linkFinal.endsWith(".doc")) {
-			conteudo = doc.obterConteudoArquivoDoc(linkFinal);
-		}
-		return conteudo;
-	}
-
-	public String extrairContextoSite(String url) throws IOException {
+	public String extrairTextoSiteHTML(String url) throws IOException {
 		if (!url.endsWith(".pdf") && !url.endsWith(".doc") && !url.endsWith(".docx") && !url.endsWith(".ppt") && !url.endsWith(".pptx")) {
 			documento = Jsoup.connect(url).get();
-			contexto.append(documento.getElementsByTag("title").text());
-			contexto.append(documento.getElementsByTag("h1").text());
-			contexto.append(documento.getElementsByTag("h2").text());
-			contexto.append(documento.getElementsByTag("h3").text());
-			contexto.append(documento.getElementsByTag("h4").text());
-			contexto.append(documento.getElementsByTag("h5").text());
-			contexto.append(documento.getElementsByTag("h6").text());
-			contexto.append(documento.getElementsByTag("p").text());
-			contexto.append(documento.getElementsByTag("span").text());
-			contexto.append(documento.getElementsByTag("b").text());
-			contexto.append(documento.getElementsByTag("a").text());
-			contexto.append(documento.getElementsByTag("i").text());
-			contexto.append(documento.getElementsByTag("meta").text());
-			contexto.append(documento.getElementsByTag("picture").text());
-			contexto.append(documento.getElementsByTag("img").text());
+			contextoHTML.append(documento.getElementsByTag("title").text());
+			contextoHTML.append(documento.getElementsByTag("h1").text());
+			contextoHTML.append(documento.getElementsByTag("h2").text());
+			contextoHTML.append(documento.getElementsByTag("h3").text());
+			contextoHTML.append(documento.getElementsByTag("h4").text());
+			contextoHTML.append(documento.getElementsByTag("h5").text());
+			contextoHTML.append(documento.getElementsByTag("h6").text());
+			contextoHTML.append(documento.getElementsByTag("p").text());
+			contextoHTML.append(documento.getElementsByTag("span").text());
+			contextoHTML.append(documento.getElementsByTag("b").text());
+			contextoHTML.append(documento.getElementsByTag("a").text());
+			contextoHTML.append(documento.getElementsByTag("i").text());
+			contextoHTML.append(documento.getElementsByTag("meta").text());
+			contextoHTML.append(documento.getElementsByTag("picture").text());
+			contextoHTML.append(documento.getElementsByTag("img").text());
 		}
-	   return contexto.toString();
+	   return contextoHTML.toString();
 	}
 	
 	public Stream<String> obterLinksRedePesquisaGoogle(String linkDeConsulta) throws IOException {

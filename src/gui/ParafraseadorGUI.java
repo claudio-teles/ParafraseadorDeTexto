@@ -8,6 +8,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -23,6 +24,7 @@ import javax.swing.UIManager;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import manipulacao.documento.ManipulacaoDocumento;
 import manipulacao.dom.ManipulacaoDOM;
 import util.UtilitarioGeral;
 
@@ -42,9 +44,11 @@ public class ParafraseadorGUI {
 	private String textoOriginal;
 	private String textoModificado;
 	private String palavraChave;
+	private String contextoString = new String();
+	private String novoTexto = new String();
 	
-//	private List<String> palavras = new ArrayList<>();
-//	private List<String> sinonimos = new ArrayList<>();
+	private List<String> palavras = new ArrayList<>();
+	private List<String> sinonimos = new ArrayList<>();
 	
 	/**
 	 * Launch the application.
@@ -73,6 +77,28 @@ public class ParafraseadorGUI {
 	public ParafraseadorGUI() {
 		initialize();
 	}
+	
+	private void lerDocumentoRemoto(ManipulacaoDocumento manipulacaoDocumento, ManipulacaoDOM md,
+			String linkFinal) throws MalformedURLException, IOException {
+		int tipoDeArquivo = ((!linkFinal.toLowerCase().endsWith(".pdf") 
+				&& !linkFinal.toLowerCase().endsWith(".doc"))) ? HTML 
+				: linkFinal.toLowerCase().endsWith(".pdf") ? PDF : DOC;
+		
+		switch (tipoDeArquivo) {
+		case PDF:
+			// ler arquivo pdf online
+			contextoString += manipulacaoDocumento.obterConteudoArquivoPDF(linkFinal);
+			
+		case DOC:
+			// ler arquivo doc online
+			contextoString += manipulacaoDocumento.obterConteudoArquivoDoc(linkFinal);
+			
+		default:
+			// ler arquivo html online
+			contextoString += md.extrairTextoSiteHTML(linkFinal);
+			
+		}
+	}
 
 	/**
 	 * Initialize the contents of the frame.
@@ -89,66 +115,72 @@ public class ParafraseadorGUI {
 		JButton btnParafrasear = new JButton("Parafrasear");
 		btnParafrasear.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				List<String> palavras = new ArrayList<>();
 				
 				palavras.clear();
 				palavras.addAll(Arrays.asList(textAreaDireita.getText().split(" ")));
 				
 				UtilitarioGeral utilitario = new UtilitarioGeral();
 				
-				List<String> sinonimos = new ArrayList<>();
-				
 				palavras.forEach(palavra -> {
+					contextoString = new String();
+					ManipulacaoDocumento manipulacaoDocumento = new ManipulacaoDocumento();
+					ManipulacaoDOM md = new ManipulacaoDOM();
+					
 					try {
+						sinonimos.clear();
 						sinonimos.addAll(utilitario.obterSinonimosOnline(palavras.get(palavras.indexOf(palavra))));
 						String expressaoFinalPesquisa = utilitario.geradorTermosPesquisa(palavraChave, sinonimos);
 						
-						ManipulacaoDOM md = new ManipulacaoDOM();
 						String linkDeConsulta = md.getQueryGoogle().append(expressaoFinalPesquisa).toString();
 						
 						List<String> links = new ArrayList<>();
 						links.addAll(md.obterLinksRedePesquisaGoogle(linkDeConsulta).collect(Collectors.toList()));
 						
-						links.forEach(link -> {
-							if (links.size() > 0) {
-								if (link.contains("url")) {
+						int quantidadeLinks = links.size();
+						
+						links.forEach(linkOriginal -> {
+							if (quantidadeLinks > 0) {
+								if (linkOriginal.contains("url")) {// link com redirecionamento
 									String linkFinal = "";
 									try {
 										// obter redirecionamento da url
-										linkFinal  = utilitario.obterLinkRedecionamentoUrl(link);
+										linkFinal  = utilitario.obterLinkRedecionamentoUrl(linkOriginal);
 										
-										int tipoDeArquivo = ((!linkFinal.toLowerCase().endsWith(".pdf") 
-												&& !linkFinal.toLowerCase().endsWith(".doc"))) ? HTML 
-												: linkFinal.toLowerCase().endsWith(".pdf") ? PDF : DOC;
-										
-										switch (tipoDeArquivo) {
-										case PDF:
-											// ler arquivo pdf online
-											
-											
-										case DOC:
-											// ler arquivo doc online
-											
-											
-										default:
-											// ler arquivo html online
-											
-										}
+										lerDocumentoRemoto(manipulacaoDocumento, md, linkFinal);
 									} catch (IOException e) {
 										e.printStackTrace();
 									}
 								} else {
-
+									// link normal sem redirecionamento
+									try {
+										lerDocumentoRemoto(manipulacaoDocumento, md, linkOriginal);
+									} catch (IOException e) {
+										e.printStackTrace();
+									}
 								}
 							}
+							
+							String palavraSorteada = utilitario
+									.sortearPalavra(utilitario.obterFrequencia(sinonimos, Arrays.asList(contextoString.split(" "))));
+							contextoString = new String();
+							
+							int indiceDaPalavraPraSerSubstituida = palavras.indexOf(palavra);
+							
+							palavras.set(indiceDaPalavraPraSerSubstituida, palavraSorteada);
+							palavras.stream().forEach(item -> novoTexto += item+" ");
+							
+							textAreaDireita.setText(novoTexto);
+							
+							sinonimos.clear();
 						});
-						
-						sinonimos.clear();
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
 				});
+				
+				palavras.clear();
 			}
+
 		});
 		frame.getContentPane().add(btnParafrasear, BorderLayout.EAST);
 		
