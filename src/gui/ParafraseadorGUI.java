@@ -46,6 +46,23 @@ public class ParafraseadorGUI {
 	private String palavraChave;
 	private String contextoString = new String();
 	private String novoTexto = new String();
+	private String palavrasNegativas = new String(
+				"o a os as um uma uns umas ao aos à às do dos da das dum duns duma dumas no nos na nas num nuns numa numas pelo pelos pela pelas\n" + 
+				"eu tu ele ela nós vós eles elas me te se lhe nos vos lhes mo mos ma mas to tos ta tas lho lhos lha lhas no-lo no-los no-la no-las\n" + 
+				"vo-lo vo-los vo-la vo-las no nos na nas mim comigo ti contigo conosco convosco te si consigo você vocês meu minha meus minhas\n" + 
+				"teu tua teus teuas seu sua seus suas nossa nossa nossos nossas vosso vossa vossos vossas este esta esse essa aquele aquela\n" + 
+				"estes estas esses essas aqueles aquelas isto isso aquilo mesmo mesmos àquele àquela deste desta disso nisso no tal naquilo\n" + 
+				"algo alguém fulano sicrano beltrano nada ninguém outrem quem tudo cada certo certa certos certas tanto tantas quer seja talvez\n" + 
+				"algum alguns alguma bastante demais mais menos muito muita nenhum nenhuns nenhuma outro outra pouco pouca qualquer quaisquer\n" + 
+				"qual que quanto quanta tais tanto tanta todo toda vários várias muito muita nenhuma outro outra poucos poucas quantos quantas\n" + 
+				"todos todas alguém algo nenhum ninguém nada onde ante após até com contra de desde em entre para per perante por sem sob sobre trás\n" + 
+				"como conforme segundo consoante durante salvo fora mediante tirante exceto senão visto nem não só mas também como também\n" + 
+				"bem como ainda porém contudo todavia entretanto entanto obstante ou ora já logo pois portanto conseguinte isso assim porque\n" + 
+				"agora quando"
+			);
+	
+	private int quantidadeTotalPalavras = 0;
+	private int posicaoPalavraSelecionada = 0;
 	
 	private List<String> palavras = new ArrayList<>();
 	private List<String> sinonimos = new ArrayList<>();
@@ -81,25 +98,28 @@ public class ParafraseadorGUI {
 	private void lerDocumentoRemoto(ManipulacaoDocumento manipulacaoDocumento, ManipulacaoDOM md,
 			String linkFinal) throws MalformedURLException, IOException {
 		int tipoDeArquivo = ((!linkFinal.toLowerCase().endsWith(".pdf") 
-				&& !linkFinal.toLowerCase().endsWith(".doc"))) ? HTML 
+				&& !linkFinal.toLowerCase().endsWith(".doc")) 
+				&& !linkFinal.toLowerCase().endsWith(".text")) ? HTML 
 				: linkFinal.toLowerCase().endsWith(".pdf") ? PDF : DOC;
 		
 		switch (tipoDeArquivo) {
 		case PDF:
 			// ler arquivo pdf online
 			contextoString += manipulacaoDocumento.obterConteudoArquivoPDF(linkFinal);
+			break;
 			
 		case DOC:
 			// ler arquivo doc online
 			contextoString += manipulacaoDocumento.obterConteudoArquivoDoc(linkFinal);
+			break;
 			
 		default:
 			// ler arquivo html online
 			contextoString += md.extrairTextoSiteHTML(linkFinal);
-			
+			break;
 		}
 	}
-
+	
 	/**
 	 * Initialize the contents of the frame.
 	 */
@@ -116,69 +136,129 @@ public class ParafraseadorGUI {
 		btnParafrasear.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				
+				String texto = textAreaDireita.getText();
+				String textoSemPontuacao = this.removerSinaisDePontuacao(texto);
+				
 				palavras.clear();
-				palavras.addAll(Arrays.asList(textAreaDireita.getText().split(" ")));
+				palavras.addAll(Arrays.asList(textoSemPontuacao.split(" ")));
 				
 				UtilitarioGeral utilitario = new UtilitarioGeral();
 				
+				quantidadeTotalPalavras = palavras.size();
+				
 				palavras.forEach(palavra -> {
-					contextoString = new String();
-					ManipulacaoDocumento manipulacaoDocumento = new ManipulacaoDocumento();
-					ManipulacaoDOM md = new ManipulacaoDOM();
-					
-					try {
-						sinonimos.clear();
-						sinonimos.addAll(utilitario.obterSinonimosOnline(palavras.get(palavras.indexOf(palavra))));
-						String expressaoFinalPesquisa = utilitario.geradorTermosPesquisa(palavraChave, sinonimos);
+					if (!palavrasNegativas.contains(palavra)) {
+						posicaoPalavraSelecionada = palavras.indexOf(palavra);
 						
-						String linkDeConsulta = md.getQueryGoogle().append(expressaoFinalPesquisa).toString();
+						lblStatus.setText(
+											"Status: A palavra"+palavra+" foi a última selecionada. "
+													+ "Etapa: "+posicaoPalavraSelecionada+"/"+quantidadeTotalPalavras+" = "
+													+String.valueOf(((posicaoPalavraSelecionada + 1) / quantidadeTotalPalavras))
+										);
 						
-						List<String> links = new ArrayList<>();
-						links.addAll(md.obterLinksRedePesquisaGoogle(linkDeConsulta).collect(Collectors.toList()));
+						contextoString = new String();
 						
-						int quantidadeLinks = links.size();
+						ManipulacaoDocumento manipulacaoDocumento = new ManipulacaoDocumento();
+						ManipulacaoDOM md = new ManipulacaoDOM();
 						
-						links.forEach(linkOriginal -> {
-							if (quantidadeLinks > 0) {
-								if (linkOriginal.contains("url")) {// link com redirecionamento
-									String linkFinal = "";
-									try {
-										// obter redirecionamento da url
-										linkFinal  = utilitario.obterLinkRedecionamentoUrl(linkOriginal);
-										
-										lerDocumentoRemoto(manipulacaoDocumento, md, linkFinal);
-									} catch (IOException e) {
-										e.printStackTrace();
-									}
-								} else {
-									// link normal sem redirecionamento
-									try {
-										lerDocumentoRemoto(manipulacaoDocumento, md, linkOriginal);
-									} catch (IOException e) {
-										e.printStackTrace();
+						try {
+							sinonimos.clear();
+							sinonimos.addAll(utilitario.obterSinonimosOnline(palavras.get(posicaoPalavraSelecionada)));
+							String expressaoFinalPesquisa = utilitario.geradorTermosPesquisa(palavraChave, sinonimos);
+							
+							String linkDeConsulta = md.getQueryGoogle().append(expressaoFinalPesquisa).toString();
+							
+							List<String> links = new ArrayList<>();
+							links.addAll(md.obterLinksRedePesquisaGoogle(linkDeConsulta).collect(Collectors.toList()));
+							
+							int quantidadeLinks = links.size();
+							
+							links.forEach(linkOriginal -> {
+								if (quantidadeLinks > 0) {
+									if (linkOriginal.contains("url")) {// link com redirecionamento
+										String linkFinal = "";
+										try {
+											// obter redirecionamento da url
+											linkFinal  = utilitario.obterLinkRedecionamentoUrl(linkOriginal);
+											
+											lerDocumentoRemoto(manipulacaoDocumento, md, linkFinal);
+										} catch (IOException e) {
+//											e.printStackTrace();
+										}
+									} else {
+										// link normal sem redirecionamento
+										try {
+											lerDocumentoRemoto(manipulacaoDocumento, md, linkOriginal);
+										} catch (IOException e) {
+//											e.printStackTrace();
+										}
 									}
 								}
-							}
+							});
 							
 							String palavraSorteada = utilitario
 									.sortearPalavra(utilitario.obterFrequencia(sinonimos, Arrays.asList(contextoString.split(" "))));
 							contextoString = new String();
 							
-							int indiceDaPalavraPraSerSubstituida = palavras.indexOf(palavra);
-							
-							palavras.set(indiceDaPalavraPraSerSubstituida, palavraSorteada);
+							palavras.set(posicaoPalavraSelecionada, palavraSorteada);
 							palavras.stream().forEach(item -> novoTexto += item+" ");
 							
 							textAreaDireita.setText(novoTexto); 
 							
 							sinonimos.clear();
-						});
-					} catch (Exception e) {
-						e.printStackTrace();
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+					
 					}
 				});
 				
 				palavras.clear();
+			}
+
+			private String removerSinaisDePontuacao(String texto) {
+				String textoSemPontuacao = "";
+				
+				if (texto.contains(".")) {
+					textoSemPontuacao = texto.replaceAll(".", "");
+				}
+				
+				if (texto.contains(",")) {
+					textoSemPontuacao = texto.replaceAll(",", "");
+				}
+				
+				if (texto.contains(";")) {
+					textoSemPontuacao = texto.replaceAll(";", "");
+				}
+				
+				if (texto.contains(":")) {
+					textoSemPontuacao = texto.replaceAll(":", "");
+				}
+				
+				if (texto.contains("?")) {
+					textoSemPontuacao = texto.replaceAll("?", "");
+				}
+				
+				if (texto.contains("!")) {
+					textoSemPontuacao = texto.replaceAll("!", "");
+				}
+				
+				if (texto.contains("\'")) {
+					textoSemPontuacao = texto.replaceAll("\'", "");
+				}
+				
+				if (texto.contains("\"")) {
+					textoSemPontuacao = texto.replaceAll("\"", "");
+				}
+				
+				if (texto.contains("(")) {
+					textoSemPontuacao = texto.replaceAll("(", "");
+				}
+				
+				if (texto.contains(")")) {
+					textoSemPontuacao = texto.replaceAll(")", "");
+				}
+				return textoSemPontuacao;
 			}
 
 		});

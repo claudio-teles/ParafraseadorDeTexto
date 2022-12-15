@@ -63,14 +63,30 @@ public class UtilitarioGeral {
 	
 	public String sortearPalavra(FrequenciaPalavras frequenciaPalavras) {
 		List<Long> numeros = new ArrayList<>();
-		numeros.addAll(frequenciaPalavras.getNumeros().stream().limit(3).sorted(Comparator.reverseOrder()).collect(Collectors.toList()));
+		numeros.addAll(frequenciaPalavras.getNumeros().stream().sorted(Comparator.reverseOrder()).limit(3).collect(Collectors.toList()));
 		
 		int quantidadeDeNumeros = numeros.size();
 		
 		if (quantidadeDeNumeros > 0) {
 			if (quantidadeDeNumeros == 3) {
-				// 3 valores mais altos do mapa, onde 1 dos 3 é sorteado 
-				return frequenciaPalavras.getFrequecia().get(numeros.get(new Random().nextInt(3)));
+				Long n1 = numeros.get(0);
+				Long n2 = numeros.get(1);
+				Long n3 = numeros.get(2);
+				
+				Long media = (n1 + n2 + n3)/3;
+				
+				boolean _3_valoresSaoProximos = (n1 >= (Math.abs(n1 - n2))&&(Math.abs(n1 - n2)) <= media) ? 
+						(n1 >= (Math.abs(n1 - n3))&&(Math.abs(n1 - n3)) <= media) ? 
+								(n1 >= (Math.abs(n2 - n3))&&(Math.abs(n2 - n3)) <= media) : true : false;
+				
+				if (_3_valoresSaoProximos) {// Todos 3 valores são próximos
+					// 3 valores mais altos do mapa, onde 1 dos 3 é sorteado 
+					return frequenciaPalavras.getFrequecia().get(numeros.get(new Random().nextInt(3)));
+				}
+				else {// Nem todos os valores são próximos
+					return this.encontrarPalavraMaisFrequente(frequenciaPalavras);
+				}
+				
 			} else {
 //				return frequenciaPalavras.getFrequecia().get(numeros.get(0));// valor mais alto do mapa
 				return this.encontrarPalavraMaisFrequente(frequenciaPalavras);

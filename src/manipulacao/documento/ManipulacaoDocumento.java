@@ -25,14 +25,17 @@ public class ManipulacaoDocumento {
 	public String obterConteudoArquivoPDF(String linkFinal) throws MalformedURLException, IOException {
 		InputStream is = new URL(linkFinal).openStream();
 		PDDocument documento = PDDocument.load(is);
-		return new PDFTextStripper().getText(documento);
+		String texto = new PDFTextStripper().getText(documento);
+		documento.close();
+		return texto;
 	}
 	
 	@SuppressWarnings("resource")
 	public String obterConteudoArquivoDocx(String linkFinal) throws URISyntaxException, IOException {
 		InputStream is = new FileInputStream(new File(new URI(linkFinal).getPath()));
 		XWPFDocument documento = new XWPFDocument(is);
-		return new XWPFWordExtractor(documento).getText();
+		String texto = new XWPFWordExtractor(documento).getText();
+		return texto;
 	}
 	
 	public String lerDocWordOnline(ManipulacaoDocumento doc, String linkOriginal) throws IOException {

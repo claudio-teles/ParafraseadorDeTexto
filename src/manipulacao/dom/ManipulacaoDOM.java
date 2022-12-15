@@ -125,7 +125,16 @@ public class ManipulacaoDOM {
 										.eachAttr("href")
 										.parallelStream()
 										.filter(
-												linha -> (linha.contains("url") || linha.contains("https://www")) 
+												linha -> (
+															linha.contains("url") || 
+															linha.contains("http://www") || 
+															linha.contains("http://www2") ||
+															linha.contains("http://www3") ||
+															linha.contains("https://www") || 
+															linha.contains("https://www2") ||
+															linha.contains("https://www3") 
+														) 
+													&& !linha.contains(".text") 
 													&& !linha.contains("google") 
 													&& !linha.contains("youtube")
 												)
