@@ -139,7 +139,7 @@ public class ManipulacaoDOM {
 													&& !linha.contains("youtube")
 												)
 										.distinct()
-										.limit(3);
+										.limit(20);
 	}
 	
 }

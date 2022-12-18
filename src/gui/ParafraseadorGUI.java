@@ -32,6 +32,7 @@ import javax.swing.event.DocumentListener;
 
 import manipulacao.documento.ManipulacaoDocumento;
 import manipulacao.dom.ManipulacaoDOM;
+import util.FrequenciaPalavras;
 import util.UtilitarioGeral;
 
 public class ParafraseadorGUI {
@@ -174,7 +175,7 @@ public class ParafraseadorGUI {
 								try {
 									sinonimos.clear();
 									sinonimos.addAll(utilitario.obterSinonimosOnline(palavras.get(posicaoPalavraSelecionada)));
-									String expressaoFinalPesquisa = utilitario.geradorTermosPesquisa(palavraChave, sinonimos);
+									String expressaoFinalPesquisa = utilitario.geradorTermosPesquisa(palavraChave, palavra);
 									
 									String linkDeConsulta = md.getQueryGoogle().append(expressaoFinalPesquisa).toString();
 									
@@ -206,17 +207,20 @@ public class ParafraseadorGUI {
 										}
 									});
 									
-									String palavraSorteada = utilitario
-											.sortearPalavra(utilitario.obterFrequencia(sinonimos, Arrays.asList(contextoString.split(" "))));
+									FrequenciaPalavras frequencia = utilitario.obterFrequencia(sinonimos, Arrays.asList(contextoString.split(" ")));
+									
 									contextoString = new String();
-									
-									novoTexto = "";
-									
-									palavras.set(posicaoPalavraSelecionada, palavraSorteada);
-									palavras.stream().forEach(item -> novoTexto += item+" ");
-									
-									painelTextoDireita.setText(novoTexto);
-									painelTextoDireita.repaint();
+//									
+									if (frequencia != null) {
+										String palavraSorteada = utilitario.sortearPalavra(frequencia);
+										novoTexto = "";
+										
+										palavras.set(posicaoPalavraSelecionada, palavraSorteada);
+										palavras.stream().forEach(item -> novoTexto += item+" ");
+										
+										painelTextoDireita.setText(novoTexto);
+										painelTextoDireita.repaint();
+									}
 									
 									sinonimos.clear();
 								} catch (Exception e) {

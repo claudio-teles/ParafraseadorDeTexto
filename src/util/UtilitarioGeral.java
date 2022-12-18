@@ -41,20 +41,34 @@ public class UtilitarioGeral {
 		return saida;
 	}
 	
+	public String geradorTermosPesquisa(String palavraChave, String palavraDaVez) {
+		termoDeSaida = "";
+		termoDeSaida += "["+palavraChave+" "+"\""+palavraDaVez+"\""+"]";
+		String saida = URLEncoder.encode(termoDeSaida, StandardCharsets.UTF_8);
+		termoDeSaida = "";
+		return saida;
+	}
+	
 	public FrequenciaPalavras obterFrequencia(List<String> sinonimos, List<String> itensContexto) {
-		List<Long> n = new ArrayList<Long>();
-		Map<Long, String> map1 = new HashMap<Long, String>();
-		Map<String, Long> map2 = new HashMap<String, Long>();
-		map2 = this.medirFrequenciaPalavras(sinonimos, itensContexto);
+		List<String> subListaSinonimos = new ArrayList<String>();
 		
-		map2.forEach((s, l) -> {
-			map1.put(l, s);
-			n.add(l);
-		});// n.stream().sorted(Comparator.reverseOrder()).collect(Collectors.toList()).get(0)
-		FrequenciaPalavras fn = new FrequenciaPalavras();
-		fn.setFrequecia(map1);
-		fn.setNumeros(n);
-		return fn;
+		subListaSinonimos.addAll(sinonimos.stream().filter(palavra -> itensContexto.contains(palavra)).collect(Collectors.toList()));
+		
+		if (subListaSinonimos.size() > 0) {
+			List<Long> n = new ArrayList<Long>();
+			Map<Long, String> map1 = new HashMap<Long, String>();
+			Map<String, Long> map2 = new HashMap<String, Long>();
+			map2 = this.medirFrequenciaPalavras(subListaSinonimos, itensContexto);
+			map2.forEach((s, l) -> {
+				map1.put(l, s);
+				n.add(l);
+			});// n.stream().sorted(Comparator.reverseOrder()).collect(Collectors.toList()).get(0)
+			FrequenciaPalavras fn = new FrequenciaPalavras();
+			fn.setFrequecia(map1);
+			fn.setNumeros(n);
+			return fn;
+		}
+		return null;
 	}
 	
 	public String encontrarPalavraMaisFrequente(FrequenciaPalavras frequenciaPalavras) {
@@ -145,42 +159,5 @@ public class UtilitarioGeral {
 		} catch (Exception e) {}
 		return listaDeSinonimos;
 	}
-	
-	
-//	private int contarNumeroPalavrasSelecionadas(List<String> sinonimos, int tamanhoSinonimos, int quantidadeSorteada) {
-//		String palavra = sinonimos.get(new Random().nextInt(tamanhoSinonimos));
-//		if (!subListaSinonimos.contains(palavra)) {
-//			subListaSinonimos.add(palavra);
-//			quantidadeSorteada++;
-//		}
-//		return quantidadeSorteada;
-//	}
-	
-//	public String geradorTermosPesquisa(String palavraChave, List<String> sinonimos) {
-//		int tamanhoSinonimos = sinonimos.size();
-//		int quantidadeSorteada = 0;
-//		
-//		termoDeSaida = "";
-//		
-//		termoDeSaida += "\""+palavraChave+"\"+";
-//		
-//		if (tamanhoSinonimos >= 10) {
-//			while (quantidadeSorteada < 10) {
-//				quantidadeSorteada = contarNumeroPalavrasSelecionadas(sinonimos, tamanhoSinonimos, quantidadeSorteada);
-//			} 
-//			subListaSinonimos.forEach(palavra -> {
-//				termoDeSaida += ("\""+palavra+"\"+");
-//			});
-//		} else {
-//			while (quantidadeSorteada < tamanhoSinonimos) {
-//				quantidadeSorteada = contarNumeroPalavrasSelecionadas(sinonimos, tamanhoSinonimos, quantidadeSorteada);
-//			} 
-//			subListaSinonimos.forEach(palavra -> {
-//				termoDeSaida += ("\""+palavra+"\"+");
-//			});
-//		}
-//		subListaSinonimos.clear();
-//		return URLEncoder.encode(termoDeSaida, StandardCharsets.UTF_8);
-//	}
 
 }
